@@ -1,5 +1,9 @@
 .eunit
 deps
+ebin
 *.o
 *.beam
 *.plt
+rebar
+src/hadoop_record_parse.erl
+src/hadoop_record_scan.erl
