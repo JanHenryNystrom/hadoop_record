@@ -135,14 +135,44 @@
           "encode_boolean(true) -> <<1>>;\n"
           "encode_boolean(false) -> <<0>>.\n\n"},
          {int,
-          "encode_int(Integer) when Integer >= -120, Integer < 128 ->"
-          "<<Integer/signed>>;\n"
-          "encode_int(I) -> I.\n\n"},
+          "encode_int(Integer) when Integer >= -16#78,\n"
+          "                         Integer =<  16#7F ->\n"
+          "    <<Integer/signed>>;\n"
+          "encode_int(Integer) when Integer >= -16#8000,\n"
+          "                         Integer =<  16#7FFF ->\n"
+          "    <<-122:8/signed, Integer:16/signed>>;\n"
+          "encode_int(Integer) when Integer >= -16#800000,\n"
+          "                         Integer =<  16#7FFFFF ->\n"
+          "    <<-123:8/signed, Integer:24/signed>>;\n"
+          "encode_int(Integer) when Integer >= -16#80000000,\n"
+          "                         Integer =<  16#7FFFFFFF ->\n"
+          "    <<-124:8/signed, Integer:32/signed>>.\n\n"
+         },
          {long,
-          "encode_long(Integer) when Integer >= -120, Integer < 128 ->"
-          " <<Integer/signed>>;\n"
-          "encode_long(I) -> I.\n\n"},
-         {float, "encode_float(Float) -> <<Float:32/float>>.\n\n"},
+          "encode_long(Integer) when Integer >= -16#78,\n"
+          "                          Integer =<  16#7F ->\n"
+          "    <<Integer/signed>>;\n"
+          "encode_long(Integer) when Integer >= -16#8000,\n"
+          "                          Integer =<  16#7FFF ->\n"
+          "    <<-122:8/signed, Integer:16/signed>>;\n"
+          "encode_long(Integer) when Integer >= -16#800000,\n"
+          "                          Integer =<  16#7FFFFF ->\n"
+          "    <<-123:8/signed, Integer:24/signed>>;\n"
+          "encode_long(Integer) when Integer >= -16#80000000,\n"
+          "                          Integer =<  16#7FFFFFFF ->\n"
+          "    <<-124:8/signed, Integer:32/signed>>;\n"
+          "encode_long(Integer) when Integer >= -16#8000000000,\n"
+          "                          Integer =<  16#7FFFFFFFFF ->\n"
+          "    <<-125:8/signed, Integer:40/signed>>;\n"
+          "encode_long(Integer) when Integer >= -16#800000000000,\n"
+          "                          Integer =<  16#7FFFFFFFFFFF ->\n"
+          "    <<-126:8/signed, Integer:48/signed>>;\n"
+          "encode_long(Integer) when Integer >= -16#80000000000000,\n"
+          "                          Integer =<  16#7FFFFFFFFFFFFF ->\n"
+          "    <<-127:8/signed, Integer:56/signed>>;\n"
+          "encode_long(Integer) when Integer >= -16#8000000000000000,\n"
+          "                          Integer =<  16#7FFFFFFFFFFFFFFF ->\n"
+          "    <<-128:8/signed, Integer:64/signed>>.\n\n"},
          {double, "encode_double(Float) -> <<Float:64/float>>.\n\n"},
          {ustring,
           "encode_ustring(String) ->"
