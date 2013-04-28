@@ -36,8 +36,19 @@
 %%%-------------------------------------------------------------------
 % Distro
 %%%-------------------------------------------------------------------
-parse_distro_test_() ->
+parse_distro_compile_test_() ->
     [?_test(?assertMatch(_, hadoop_record:compile(File))) ||
+        File <- files(distro)].
+
+parse_distro_cmd_test_() ->
+    [?_test(
+        ?assertMatch(_,
+                     hadoop_record:cmd(
+                       File,
+                       lists:flatten(
+                         io_lib:format("~p",
+                                       [[{src_dir, filename:dirname(File)}]]))
+                      ))) ||
         File <- files(distro)].
 
 

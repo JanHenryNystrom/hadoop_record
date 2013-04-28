@@ -26,7 +26,7 @@
 -copyright('Jan Henry Nystrom <JanHenryNystrom@gmail.com>').
 
 %% API
--export([compile/1, compile/2]).
+-export([cmd/2, compile/1, compile/2]).
 
 %% Includes
 -include_lib("hadoop_record/src/hadoop_record.hrl").
@@ -356,6 +356,20 @@
 %%====================================================================
 %% API
 %%====================================================================
+
+%%--------------------------------------------------------------------
+%% Function: cmd(FileName, ArgsString) -> ok | error.
+%% @doc
+%%   Compiles a .jute file given the filename and the arguments as a string.
+%%   Intended to be used from the command line.
+%% @end
+%%--------------------------------------------------------------------
+-spec cmd(string(), string()) -> ok | {error, _}.
+%%--------------------------------------------------------------------
+cmd(File, ArgsString) ->
+    {ok, Tokens, _} = erl_scan:string(ArgsString ++ "."),
+    {ok, Args} = erl_parse:parse_term(Tokens),
+    compile(File, Args).
 
 %%--------------------------------------------------------------------
 %% Function: compile(FileName) -> ok | error.
