@@ -154,10 +154,20 @@
 -define(ERL_DECODE_POSTAMBLE,
         "do_decode({Key, Value}, Bin, Lazy) ->\n"
         "    {Size, Bin1, Lazy1} = decode_int(Bin, Lazy),\n"
-        "    do_decode_map(Size, Key, Value, Bin1, Lazy1);\n"
+        "    decode_map(Size, {Key, Value}, Bin1, Lazy1, []);\n"
         "do_decode(Type, Bin, Lazy) when is_list(Type) ->\n"
         "    {Size, Bin1, Lazy1} = decode_int(Bin, Lazy),\n"
-        "    do_decode_vector(Size, Type, Bin1, Lazy1).").
+        "    decode_vector(Size, Type, Bin1, Lazy1, []).\n\n"
+        "decode_map(0, _, Bin, Lazy, Acc) -> {lists:reverse(Acc), Bin, Lazy};\n"
+        "decode_map(N, Type = {Key, Value}, Bin, Lazy, Acc) ->\n"
+        "    {H1, Bin1, Lazy1} = do_decode(Key, Bin, Lazy),\n"
+        "    {H2, Bin2, Lazy2} = do_decode(Value, Bin1, Lazy1),\n"
+        "    decode_map(N - 1, Type, Bin2, Lazy2, [{H1, H2} | Acc]).\n\n"
+        "decode_vector(0, _, Bin, Lazy, Acc) ->"
+        " {lists:reverse(Acc), Bin, Lazy};\n"
+        "decode_vector(N, Type, Bin, Lazy, Acc) ->\n"
+        "    {H, Bin1, Lazy1} = do_decode(Type, Bin, Lazy),\n"
+        "    decode_vector(N - 1, Type, Bin1, Lazy1, [H | Acc]).").
 
 
 -define(ERL_DECODE_MAP,
@@ -706,9 +716,9 @@ gen_decode_chain(#field{type = Type}, Stream) when is_atom(Type) ->
         false -> io:format(Stream, "{fun do_decode/3, ~s}", [Type])
     end;
 gen_decode_chain(#field{type = #vector{type = Type}}, Stream) ->
-    io:format(Stream, "{fun do_decode_vector/3, ~s}", [Type]);
+    io:format(Stream, "{fun decode_vector/5, ~s}", [Type]);
 gen_decode_chain(#field{type = #map{key = Key, value = Value}}, Stream) ->
-    io:format(Stream, "{fun do_decode_map/3, ~s}", [{Key, Value}]).
+    io:format(Stream, "{fun decode_map/5, ~s}", [{Key, Value}]).
 
 gen_do_decode_field_match(#field{name = Name, variable = Var}, Stream) ->
     io:format(Stream, "~n           ~s = ~s", [Name, Var]).
