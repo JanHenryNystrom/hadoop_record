@@ -44,10 +44,10 @@ parse_distro_cmd_test_() ->
     [?_test(
         ?assertMatch(_,
                      hadoop_record:cmd(
-                       File,
+                       [File,
                        lists:flatten(
                          io_lib:format("~p",
-                                       [[{src_dir, filename:dirname(File)}]]))
+                                        [[{src_dir, filename:dirname(File)}]]))]
                       ))) ||
         File <- files(distro)].
 
