@@ -130,11 +130,15 @@
         "    [do_encode(Elt) || Elt <- List].").
 
 -define(ERL_ENCODE_MAP,
-        [{byte, "encode_byte(Byte) -> <<Byte>>.\n\n"},
-         {boolean,
+        [{byte, true, "encode_byte(Byte) -> <<Byte>>.\n\n"},
+         {byte, false, "encode_byte(Byte) -> <<Byte>>.\n\n"},
+         {boolean, true,
           "encode_boolean(true) -> <<1>>;\n"
           "encode_boolean(false) -> <<0>>.\n\n"},
-         {int,
+         {boolean, false,
+          "encode_boolean(true) -> <<1>>;\n"
+          "encode_boolean(false) -> <<0>>.\n\n"},
+         {int, true,
           "encode_int(Integer) when Integer >= -16#78,\n"
           "                         Integer =<  16#7F ->\n"
           "    <<Integer/signed>>;\n"
@@ -148,7 +152,12 @@
           "                         Integer =<  16#7FFFFFFF ->\n"
           "    <<-124:8/signed, Integer:32/signed>>.\n\n"
          },
-         {long,
+         {int, false,
+          "encode_int(Integer) when Integer >= -16#80000000,\n"
+          "                         Integer =<  16#7FFFFFFF ->\n"
+          "    <<-Integer:32/signed>>.\n\n"
+         },
+         {long, true,
           "encode_long(Integer) when Integer >= -16#78,\n"
           "                          Integer =<  16#7F ->\n"
           "    <<Integer/signed>>;\n"
@@ -173,11 +182,23 @@
           "encode_long(Integer) when Integer >= -16#8000000000000000,\n"
           "                          Integer =<  16#7FFFFFFFFFFFFFFF ->\n"
           "    <<-128:8/signed, Integer:64/signed>>.\n\n"},
-         {double, "encode_double(Float) -> <<Float:64/float>>.\n\n"},
-         {ustring,
+         {long, false,
+          "encode_long(Integer) when Integer >= -16#8000000000000000,\n"
+          "                          Integer =<  16#7FFFFFFFFFFFFFFF ->\n"
+          "    <<Integer:64/signed>>.\n\n"},
+         {float, true, "encode_float(Float) -> <<Float:32/float>>.\n\n"},
+         {float, false, "encode_float(Float) -> <<Float:32/float>>.\n\n"},
+         {double, true, "encode_double(Float) -> <<Float:64/float>>.\n\n"},
+         {double, false, "encode_double(Float) -> <<Float:64/float>>.\n\n"},
+         {ustring, true,
           "encode_ustring(String) ->"
           " [encode_int(byte_size(String)), String].\n\n"},
-         {buffer,
+         {ustring, false,
+          "encode_ustring(String) ->"
+          " [encode_int(byte_size(String)), String].\n\n"},
+         {buffer, true,
+          "encode_buffer(Buffer) -> [encode_int(byte_size(Buffer)), Buffer]."},
+         {buffer, false,
           "encode_buffer(Buffer) -> [encode_int(byte_size(Buffer)), Buffer]."}
         ]).
 
@@ -201,14 +222,21 @@
 
 
 -define(ERL_DECODE_MAP,
-        [{byte,
+        [{byte, true,
           "decode_byte(<<Byte, T/binary>>, Lazy) -> {<<Byte>>, T, Lazy};\n"
           "decode_byte(<<>>, Lazy) ->\n"
           "    case Lazy(?LAZY_WAIT) of\n"
           "        {<<>>, _} -> exit(truncated_byte);\n"
           "        {Bin, Lazy1} -> decode_byte(Bin, Lazy1)\n"
           "    end.\n\n" },
-         {boolean,
+         {byte, false,
+          "decode_byte(<<Byte, T/binary>>, Lazy) -> {<<Byte>>, T, Lazy};\n"
+          "decode_byte(<<>>, Lazy) ->\n"
+          "    case Lazy(?LAZY_WAIT) of\n"
+          "        {<<>>, _} -> exit(truncated_byte);\n"
+          "        {Bin, Lazy1} -> decode_byte(Bin, Lazy1)\n"
+          "    end.\n\n" },
+         {boolean, true,
           "decode_boolean(<<0/signed, T/binary>>, Lazy) -> {false, T, Lazy};\n"
           "decode_boolean(<<_, T/binary>>, Lazy) -> {true, T, Lazy};\n"
           "decode_boolean(<<>>, Lazy) ->\n"
@@ -216,7 +244,15 @@
           "        {<<>>, _} -> exit(truncated_boolean);\n"
           "        {Bin, Lazy1} -> decode_boolean(Bin, Lazy1)\n"
           "    end.\n\n"},
-         {int,
+         {boolean, false,
+          "decode_boolean(<<0/signed, T/binary>>, Lazy) -> {false, T, Lazy};\n"
+          "decode_boolean(<<_, T/binary>>, Lazy) -> {true, T, Lazy};\n"
+          "decode_boolean(<<>>, Lazy) ->\n"
+          "    case Lazy(?LAZY_WAIT) of\n"
+          "        {<<>>, _} -> exit(truncated_boolean);\n"
+          "        {Bin, Lazy1} -> decode_boolean(Bin, Lazy1)\n"
+          "    end.\n\n"},
+         {int, true,
           "decode_int(<<I/signed, T/binary>>, Lazy) when I >= -120, "
           "I < 128 ->\n"
           "    {I, T, Lazy};\n"
@@ -238,7 +274,15 @@
           "    decode_int(Bin1, Lazy1);\n"
           "decode_int(_, _) ->\n"
           "    exit(truncated_int).\n\n"},
-         {long,
+         {int, false,
+          "decode_int(<<I:32/signed, T/binary>>, Lazy) ->\n"
+          "    {I, T, Lazy};\n"
+          "decode_int(<<>>, Lazy) ->\n"
+          "    {Bin1, Lazy1} = Lazy(?LAZY_WAIT),\n"
+          "    decode_int(Bin1, Lazy1);\n"
+          "decode_int(_, _) ->\n"
+          "    exit(truncated_int).\n\n"},
+         {long, true,
           "decode_long(<<I/signed, T/binary>>, Lazy) when I >= -120, "
           "I < 128 ->\n"
           "    {I, T, Lazy};\n"
@@ -260,7 +304,15 @@
           "    decode_long(Bin1, Lazy1);\n"
           "decode_long(_, _) ->\n"
           "    exit(truncated_long).\n\n"},
-         {float,
+         {long, false,
+          "decode_long(<<I:64/signed, T/binary>>, Lazy) ->\n"
+          "    {I, T, Lazy};\n"
+          "decode_long(<<>>, Lazy) ->\n"
+          "    {Bin1, Lazy1} = Lazy(?LAZY_WAIT),\n"
+          "    decode_long(Bin1, Lazy1);\n"
+          "decode_long(_, _) ->\n"
+          "    exit(truncated_long).\n\n"},
+         {float, true,
           "decode_float(<<F/32/float, T/binary>>, Lazy) -> {F, T, Lazy};\n"
           "decode_float(Bin, Lazy) ->\n"
           "    case Lazy(?LAZY_WAIT) of\n"
@@ -270,7 +322,17 @@
           "        _ ->\n"
           "            exit(truncated_float)\n"
           "    end.\n\n"},
-         {double,
+         {float, false,
+          "decode_float(<<F/32/float, T/binary>>, Lazy) -> {F, T, Lazy};\n"
+          "decode_float(Bin, Lazy) ->\n"
+          "    case Lazy(?LAZY_WAIT) of\n"
+          "        {Bin1, Lazy1} when byte_size(Bin) + byte_size(Bin1) "
+          ">= 8 ->\n"
+          "            decode_float(<<Bin/binary, Bin1/binary>>, Lazy1);\n"
+          "        _ ->\n"
+          "            exit(truncated_float)\n"
+          "    end.\n\n"},
+         {double, true,
           "decode_float(<<F/64/float, T/binary>>, Lazy) -> {F, T, Lazy};\n"
           "decode_float(Bin, Lazy) ->\n"
           "    case Lazy(?LAZY_WAIT) of\n"
@@ -280,7 +342,17 @@
           "        _ ->\n"
           "            exit(truncated_duoble)\n"
           "    end.\n\n"},
-         {ustring,
+         {double, false,
+          "decode_float(<<F/64/float, T/binary>>, Lazy) -> {F, T, Lazy};\n"
+          "decode_float(Bin, Lazy) ->\n"
+          "    case Lazy(?LAZY_WAIT) of\n"
+          "        {Bin1, Lazy1} when byte_size(Bin) + byte_size(Bin1) "
+          ">= 8 ->\n"
+          "            decode_float(<<Bin/binary, Bin1/binary>>, Lazy1);\n"
+          "        _ ->\n"
+          "            exit(truncated_duoble)\n"
+          "    end.\n\n"},
+         {ustring, true,
           "decode_ustring(Bin, Lazy) ->\n"
           "    {Size, Bin1, Lazy1}  = decode_int(Bin, Lazy),\n"
           "    decode_ustring(Size, Bin1, Lazy1, <<>>).\n\n"
@@ -292,7 +364,32 @@
           "        {<<>>, _} -> exit(truncated_ustring);\n"
           "        {Bin, Lazy1} -> decode_ustring(N, Bin, Lazy1, Acc)\n"
           "    end.\n\n"},
-         {buffer,
+         {ustring, false,
+          "decode_ustring(Bin, Lazy) ->\n"
+          "    {Size, Bin1, Lazy1}  = decode_int(Bin, Lazy),\n"
+          "    decode_ustring(Size, Bin1, Lazy1, <<>>).\n\n"
+          "decode_ustring(0, Bin, Lazy, Acc) -> {Acc, Bin, Lazy};\n"
+          "decode_ustring(N, <<H, T/binary>>, Lazy, Acc) ->\n"
+          "    decode_ustring(N - 1, T, Lazy, <<Acc/binary, H>>);\n"
+          "decode_ustring(N, <<>>, Lazy, Acc) ->\n"
+          "    case Lazy(?LAZY_WAIT) of\n"
+          "        {<<>>, _} -> exit(truncated_ustring);\n"
+          "        {Bin, Lazy1} -> decode_ustring(N, Bin, Lazy1, Acc)\n"
+          "    end.\n\n"},
+         {buffer, true,
+          "decode_buffer(Bin, Lazy) ->\n"
+          "    {Size, Bin1, Lazy1}  = decode_int(Bin, Lazy),\n"
+          "    decode_buffer(Size, Bin1, Lazy1, <<>>).\n"
+          "\n"
+          "decode_buffer(0, Bin, Lazy, Acc) -> {Acc, Bin, Lazy};\n"
+          "decode_buffer(N, <<H, T/binary>>, Lazy, Acc) ->\n"
+          "    decode_buffer(N - 1, T, Lazy, <<Acc/binary, H>>);\n"
+          "decode_buffer(N, <<>>, Lazy, Acc) ->\n"
+          "    case Lazy(?LAZY_WAIT) of\n"
+          "        {<<>>, _} -> exit(truncated_ustring);\n"
+          "        {Bin, Lazy1} -> decode_buffer(N, Bin, Lazy1, Acc)\n"
+          "    end.\n\n"},
+         {buffer, false,
           "decode_buffer(Bin, Lazy) ->\n"
           "    {Size, Bin1, Lazy1}  = decode_int(Bin, Lazy),\n"
           "    decode_buffer(Size, Bin1, Lazy1, <<>>).\n"
@@ -339,7 +436,8 @@
                dest_dir = "." :: string(),
                include_dir = "" :: string(),
                license = ?LICENSE_PREAMBLE :: string(),
-               copyright = ?COPYRIGHT_PREAMBLE :: string()
+               copyright = ?COPYRIGHT_PREAMBLE :: string(),
+               zero_compression = false :: boolean()
               }).
 
 -record(attr, {type ::atom(),
@@ -366,10 +464,14 @@
 %%--------------------------------------------------------------------
 -spec cmd([string()]) -> ok | {error, _}.
 %%--------------------------------------------------------------------
-cmd([File, ArgsString]) ->
-    {ok, Tokens, _} = erl_scan:string(ArgsString ++ "."),
-    {ok, Args} = erl_parse:parse_term(Tokens),
-    compile(File, Args).
+cmd([File | ArgsString]) ->
+    compile(File, [to_arg(Arg) || Arg <- ArgsString]).
+
+to_arg(ArgString) ->
+    {ok, Tokens, _} = erl_scan:string(ArgString ++ "."),
+    {ok, Arg} = erl_parse:parse_term(Tokens),
+    Arg.
+
 
 %%--------------------------------------------------------------------
 %% Function: compile(FileName) -> ok | error.
@@ -611,7 +713,10 @@ gen(hrl, [preamble, Uses | Modules], Stream, Opts) ->
     [gen_type(Use, Stream) || Use <- Uses -- ?BUILT_IN],
     io:format(Stream, "~n", []);
 gen(erl, [preamble, Uses | Modules], Stream, Opts) ->
-    #opts{dest_name = Name, copyright = Copyright, license = License} = Opts,
+    #opts{dest_name = Name,
+          copyright = Copyright,
+          license = License,
+          zero_compression = ZeroComp} = Opts,
     io:format(Stream, "%%~60c~n%% Copyright ~s~n", [$=, Copyright]),
     io:format(Stream, "%%~n~s~n%%~n%%~60c~n~n", [License, $=]),
     io:format(Stream, "%%~60c~n~s ~p~n%% ~s~s~n%%~60c~n",
@@ -643,7 +748,7 @@ gen(erl, [preamble, Uses | Modules], Stream, Opts) ->
     [case lists:member(Type, Uses) of
          true -> io:format(Stream, "~s", [Format]);
          false -> ok
-     end || {Type, Format} <- ?ERL_ENCODE_MAP],
+     end || {Type, Bool, Format} <- ?ERL_ENCODE_MAP, Bool == ZeroComp],
     io:format(Stream, "~n~n%%~60c~n%% Decoding~n%%~60c~n~n", [$-, $-]),
     spaced(Records, fun gen_do_decode/2, ";\n", Stream),
     io:format(Stream, ";~n", []),
@@ -659,7 +764,7 @@ gen(erl, [preamble, Uses | Modules], Stream, Opts) ->
     [case lists:member(Type, Uses) of
          true -> io:format(Stream, "~s", [Format]);
          false -> ok
-     end || {Type, Format} <- ?ERL_DECODE_MAP],
+     end || {Type, Bool, Format} <- ?ERL_DECODE_MAP, Bool == ZeroComp],
     io:format(Stream, "~s~n~n", [?DECODE_CHAIN]),
     io:format(Stream, "~s~n", [?ERL_POSTAMBLE]).
 
@@ -840,5 +945,7 @@ parse_opt({dest_dir, Dir}, Opts) -> Opts#opts{dest_dir = Dir};
 parse_opt({include_dir, Dir}, Opts) -> Opts#opts{include_dir = Dir};
 parse_opt({license, License}, Opts) -> Opts#opts{license = License};
 parse_opt({copyright, Copyright}, Opts) -> Opts#opts{copyright = Copyright};
+parse_opt({zero_compression, Boolean}, Opts) when is_boolean(Boolean) ->
+    Opts#opts{zero_compression = Boolean};
 parse_opt({include_paths, Paths}, Opts = #opts{include_paths = Paths1}) ->
     Opts#opts{include_paths = Paths1 ++ Paths}.
