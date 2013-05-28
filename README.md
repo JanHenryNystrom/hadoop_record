@@ -41,7 +41,7 @@ ok
 
 An example of the use in a Makefile from the [zookeeper client][3] library:
 
-```makefile
+```make
 erl -pa deps/hadoop_record/ebin -run hadoop_record cmd "hadoop_record/zookeeper" "{dest_dir, \"src\"}" -run init stop -noshell
 ```
 
@@ -112,7 +112,7 @@ I know I really should.
        "Rebar - A build tool for Erlang"
   [6]: http://github.com/JanHenryNystrom/hadoop_record/issues
        "hadoop_record issues"
-  [7]: http://github.com/JanHenryNystrom/jhn_stdlib/blob/master/THANKS
+  [7]: http://github.com/JanHenryNystrom/hadoop_record/blob/master/THANKS
        "thanks"
   [8]: http://github.com/erlang/otp/wiki/Writing-good-commit-messages
        "Erlang/OTP commit messages"
