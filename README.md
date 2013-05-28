@@ -90,7 +90,7 @@ Contribute
 ----------
 
 Should you find yourself using jhn_stdlib and have issues, comments or
-feedback please [create an issue here on GitHub.] [2]
+feedback please [create an issue here on GitHub.] [6]
 
 Patches are greatly appreciated, but since these libraries reflect my
 learning process and I have rather peculiar notions of code hygiene
