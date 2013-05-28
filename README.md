@@ -4,7 +4,7 @@ A [hadoop record][2] compiler
 
   * [Introduction](#introduction)
   * [Features/Modules](#features)
-  * Examples(#examples)
+  * [Examples](#examples)
   * [Build](#build)
   * [Install](#install)
   * [Contribute](#contribute) - Read if you're planning to submit patches
