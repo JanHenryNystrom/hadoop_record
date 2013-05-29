@@ -41,7 +41,7 @@ ok
 
 An example of the use in a Makefile from the [zookeeper client][3] library:
 
-```make
+```sh
 erl -pa deps/hadoop_record/ebin -run hadoop_record cmd "hadoop_record/zookeeper" "{dest_dir, \"src\"}" -run init stop -noshell
 ```
 
